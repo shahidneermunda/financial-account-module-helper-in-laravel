@@ -1,81 +1,121 @@
-Account Helper - Complete Documentation
-Table of Contents
-Overview
-Features
-Models
-Accountable Trait
-AccountingService
-Financial Year Management
-Account & Account Type Management
-Financial Reports
-Usage Examples
-Overview
-Account Helper is a comprehensive Laravel-based accounting system that provides double-entry bookkeeping, automatic journal entry creation, account management, and financial reporting capabilities.
+# 📊 Account Helper - Complete Documentation
+
+> A comprehensive Laravel-based accounting system that provides double-entry bookkeeping, automatic journal entry creation, account management, and financial reporting capabilities.
+
+---
+
+## 📑 Table of Contents
+
+- [Overview](#overview)
+- [Features](#core-features)
+- [Models](#models)
+- [Accountable Trait](#accountable-trait)
+- [AccountingService](#accountingservice)
+- [Financial Year Management](#financial-year-management)
+- [Account & Account Type Management](#account--account-type-management)
+- [Financial Reports](#financial-reports)
+- [Usage Examples](#complete-usage-examples)
+- [Best Practices](#best-practices)
+
+---
+
+## 🎯 Overview
+
+**Account Helper** is a comprehensive Laravel-based accounting system that provides double-entry bookkeeping, automatic journal entry creation, account management, and financial reporting capabilities.
 
 The system follows standard accounting principles with support for:
 
-Chart of Accounts with hierarchical structure
-Double-entry journal entries
-Automatic balance calculations
-Financial reports (Trial Balance, Balance Sheet, Income Statement, General Ledger)
-Integration with your models via the Accountable trait
-Core Features
-Account Management Model
+- ✅ Chart of Accounts with hierarchical structure
+- ✅ Double-entry journal entries
+- ✅ Automatic balance calculations
+- ✅ Financial reports (Trial Balance, Balance Sheet, Income Statement, General Ledger)
+- ✅ Integration with your models via the Accountable trait
+
+---
+
+## ⚡ Core Features
+
+### Account Management Model
 Create and manage accounts with codes, names, types, and hierarchical relationships.
 
-Account Types Model
+### Account Types Model
 Define account types (Asset, Liability, Equity, Revenue, Expense) with normal balance rules.
 
-Journal Entries Model
+### Journal Entries Model
 Create multi-line journal entries with automatic balance validation.
 
-Account Balances Model
+### Account Balances Model
 Track account balances by date with automatic updates.
 
-Accountable Trait Trait
+### Accountable Trait
 Automatically create journal entries when models are created, updated, or deleted.
 
-AccountingService Service
+### AccountingService
 Service layer for creating transactions, posting entries, and managing accounting operations.
 
-ReportHelper Helper
+### ReportHelper
 Generate financial reports including Trial Balance, Balance Sheet, Income Statement, and General Ledger.
 
-Models
-Account
-The Account model represents a single account in your chart of accounts.
+---
 
-Key Methods:
-getCurrentBalance(?string $date = null): float - Get account balance for a specific date
-calculateBalanceFromEntries(?string $date = null): float - Calculate balance from journal entries
-updateBalance(?string $date = null): void - Update account balance record
-scopeActive($query) - Query scope for active accounts
-scopeOfType($query, $accountTypeCode) - Query scope for accounts by type
-AccountType
+## 📦 Models
+
+### Account
+
+The `Account` model represents a single account in your chart of accounts.
+
+**Key Methods:**
+
+| Method | Description |
+|--------|-------------|
+| `getCurrentBalance(?string $date = null): float` | Get account balance for a specific date |
+| `calculateBalanceFromEntries(?string $date = null): float` | Calculate balance from journal entries |
+| `updateBalance(?string $date = null): void` | Update account balance record |
+| `scopeActive($query)` | Query scope for active accounts |
+| `scopeOfType($query, $accountTypeCode)` | Query scope for accounts by type |
+
+### AccountType
+
 Defines the type of account (Asset, Liability, Equity, Revenue, Expense).
 
-Key Methods:
-isDebitNormal(): bool - Check if normal balance is debit
-isCreditNormal(): bool - Check if normal balance is credit
-JournalEntry
+**Key Methods:**
+
+| Method | Description |
+|--------|-------------|
+| `isDebitNormal(): bool` | Check if normal balance is debit |
+| `isCreditNormal(): bool` | Check if normal balance is credit |
+
+### JournalEntry
+
 Represents a journal entry with multiple lines (debits and credits).
 
-Key Methods:
-isBalanced(): bool - Check if debits equal credits
-post(?int $userId = null): bool - Post the journal entry
-reverse(?string $description = null): JournalEntry - Reverse a posted entry
-scopePosted($query) - Query scope for posted entries
-scopeDateRange($query, $startDate, $endDate) - Query scope for date range
-JournalEntryLine
+**Key Methods:**
+
+| Method | Description |
+|--------|-------------|
+| `isBalanced(): bool` | Check if debits equal credits |
+| `post(?int $userId = null): bool` | Post the journal entry |
+| `reverse(?string $description = null): JournalEntry` | Reverse a posted entry |
+| `scopePosted($query)` | Query scope for posted entries |
+| `scopeDateRange($query, $startDate, $endDate)` | Query scope for date range |
+
+### JournalEntryLine
+
 Represents a single line in a journal entry (debit or credit).
 
-AccountBalance
+### AccountBalance
+
 Stores account balance snapshots by date for performance optimization.
 
-Accountable Trait
-The Accountable trait allows any Eloquent model to automatically create journal entries when the model is created, updated, or deleted.
+---
 
-Basic Usage
+## 🔗 Accountable Trait
+
+The `Accountable` trait allows any Eloquent model to automatically create journal entries when the model is created, updated, or deleted.
+
+### Basic Usage
+
+```php
 use App\Traits\Accountable;
 
 class Sale extends Model
@@ -95,23 +135,32 @@ class Sale extends Model
         'reverse_on_delete' => true,
     ];
 }
-Configuration Options
-Option	Type	Description
-debit_account	string|int|Closure	Account code, ID, or closure returning account identifier
-credit_account	string|int|Closure	Account code, ID, or closure returning account identifier
-amount_field	string|Closure	Field name or closure returning the amount
-description	string|Closure	Description template (supports {id}, {date} placeholders) or closure
-date_field	string|Closure	Field name or closure returning the date (default: 'created_at')
-auto_post	bool	Automatically post journal entry (default: true)
-update_on_change	bool	Reverse and recreate entry on update (default: false)
-reverse_on_delete	bool	Reverse entry on delete (default: false)
-Available Methods
-createJournalEntry(): ?JournalEntry - Manually create journal entry
-updateJournalEntry(): void - Manually update journal entry
-reverseJournalEntry(): ?JournalEntry - Manually reverse journal entry
-getJournalEntry(): ?JournalEntry - Get associated journal entry
-getJournalEntries() - Get all associated journal entries
-Advanced Example with Closures
+```
+
+### Configuration Options
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `debit_account` | `string\|int\|Closure` | Account code, ID, or closure returning account identifier |
+| `credit_account` | `string\|int\|Closure` | Account code, ID, or closure returning account identifier |
+| `amount_field` | `string\|Closure` | Field name or closure returning the amount |
+| `description` | `string\|Closure` | Description template (supports `{id}`, `{date}` placeholders) or closure |
+| `date_field` | `string\|Closure` | Field name or closure returning the date (default: `'created_at'`) |
+| `auto_post` | `bool` | Automatically post journal entry (default: `true`) |
+| `update_on_change` | `bool` | Reverse and recreate entry on update (default: `false`) |
+| `reverse_on_delete` | `bool` | Reverse entry on delete (default: `false`) |
+
+### Available Methods
+
+- `createJournalEntry(): ?JournalEntry` - Manually create journal entry
+- `updateJournalEntry(): void` - Manually update journal entry
+- `reverseJournalEntry(): ?JournalEntry` - Manually reverse journal entry
+- `getJournalEntry(): ?JournalEntry` - Get associated journal entry
+- `getJournalEntries()` - Get all associated journal entries
+
+### Advanced Example with Closures
+
+```php
 protected $accountingConfig = [
     'debit_account' => function($model) {
         return $model->payment_method === 'cash' ? '1100' : '1200';
@@ -124,10 +173,17 @@ protected $accountingConfig = [
         return "Sale #{$model->id} to {$model->customer->name}";
     },
 ];
-AccountingService
-The AccountingService provides methods for creating and managing journal entries and transactions.
+```
 
-Creating a Simple Transaction
+---
+
+## 🛠️ AccountingService
+
+The `AccountingService` provides methods for creating and managing journal entries and transactions.
+
+### Creating a Simple Transaction
+
+```php
 use App\Services\AccountingService;
 
 $accountingService = app(AccountingService::class);
@@ -144,7 +200,11 @@ $entry = $accountingService->createTransaction(
     ],
     true // Auto post
 );
-Creating a Complex Journal Entry
+```
+
+### Creating a Complex Journal Entry
+
+```php
 $entry = $accountingService->createJournalEntry(
     [
         'entry_date' => now()->toDateString(),
@@ -179,23 +239,34 @@ $entry = $accountingService->createJournalEntry(
     ],
     true // Auto post
 );
-Service Methods
-Method	Description
-createJournalEntry(array $data, array $lines, bool $autoPost)	Create a journal entry with multiple lines
-createTransaction(int $debitId, int $creditId, float $amount, string $description, array $data, bool $autoPost)	Create a simple double-entry transaction
-postEntry($entry, ?int $userId)	Post a journal entry
-reverseEntry($entry, ?string $description)	Reverse a posted journal entry
-getAccountBalance($account, ?string $date)	Get account balance for a specific date
-updateAccountBalance($account, ?string $date)	Update account balance for a specific date
-Financial Year Management
+```
+
+### Service Methods
+
+| Method | Description |
+|-------|-------------|
+| `createJournalEntry(array $data, array $lines, bool $autoPost)` | Create a journal entry with multiple lines |
+| `createTransaction(int $debitId, int $creditId, float $amount, string $description, array $data, bool $autoPost)` | Create a simple double-entry transaction |
+| `postEntry($entry, ?int $userId)` | Post a journal entry |
+| `reverseEntry($entry, ?string $description)` | Reverse a posted journal entry |
+| `getAccountBalance($account, ?string $date)` | Get account balance for a specific date |
+| `updateAccountBalance($account, ?string $date)` | Update account balance for a specific date |
+
+---
+
+## 📅 Financial Year Management
+
 The system supports financial year management, allowing you to organize transactions and reports by financial year periods. Financial years can be calendar-based (Jan-Dec) or custom periods (e.g., April-March).
 
-Enabling/Disabling Financial Year Management
+### Enabling/Disabling Financial Year Management
+
 Financial year management can be enabled or disabled via configuration. When disabled, the system works without financial year filtering, and all journal entries and reports operate normally.
 
-Configuration File
-Edit config/accounting.php to configure financial year settings:
+### Configuration File
 
+Edit `config/accounting.php` to configure financial year settings:
+
+```php
 return [
     // Enable or disable financial year wise listing
     'enable_financial_year' => env('ACCOUNTING_ENABLE_FINANCIAL_YEAR', true),
@@ -206,9 +277,13 @@ return [
     // Auto-assign financial year to journal entries
     'auto_assign_financial_year' => env('ACCOUNTING_AUTO_ASSIGN_FY', true),
 ];
-Environment Variables
-You can also set these in your .env file:
+```
 
+### Environment Variables
+
+You can also set these in your `.env` file:
+
+```env
 # Enable/disable financial year management
 ACCOUNTING_ENABLE_FINANCIAL_YEAR=true
 
@@ -217,7 +292,11 @@ ACCOUNTING_FY_START_MONTH=4
 
 # Auto-assign financial year
 ACCOUNTING_AUTO_ASSIGN_FY=true
-Checking if Financial Year is Enabled
+```
+
+### Checking if Financial Year is Enabled
+
+```php
 use App\Helpers\AccountingHelper;
 
 // Check if financial year is enabled
@@ -230,28 +309,40 @@ if (AccountingHelper::isFinancialYearEnabled()) {
 if (config('accounting.enable_financial_year')) {
     // Financial year features available
 }
-Behavior When Disabled
+```
+
+### Behavior When Disabled
+
 When financial year management is disabled:
 
-Journal entries are created without financial year assignment
-Reports work normally using date ranges instead of financial years
-Financial year-specific methods will throw exceptions if called
-The system behaves as if financial year management never existed
-Note: The financial_year_id column in the database will still exist (it's nullable), but it won't be used when the feature is disabled.
+- Journal entries are created without financial year assignment
+- Reports work normally using date ranges instead of financial years
+- Financial year-specific methods will throw exceptions if called
+- The system behaves as if financial year management never existed
 
-FinancialYear Model
-The FinancialYear model represents a financial year period with start and end dates.
+> **Note:** The `financial_year_id` column in the database will still exist (it's nullable), but it won't be used when the feature is disabled.
 
-Key Methods:
-containsDate(string $date): bool - Check if a date falls within this financial year
-close(): bool - Close the financial year
-activate(): bool - Activate this financial year (deactivates others)
-static::forDate(string $date): ?FinancialYear - Get financial year for a date
-static::active(): ?FinancialYear - Get the active financial year
-FinancialYearService
-The FinancialYearService provides methods to manage financial years.
+### FinancialYear Model
 
-Creating Financial Years
+The `FinancialYear` model represents a financial year period with start and end dates.
+
+**Key Methods:**
+
+| Method | Description |
+|--------|-------------|
+| `containsDate(string $date): bool` | Check if a date falls within this financial year |
+| `close(): bool` | Close the financial year |
+| `activate(): bool` | Activate this financial year (deactivates others) |
+| `static::forDate(string $date): ?FinancialYear` | Get financial year for a date |
+| `static::active(): ?FinancialYear` | Get the active financial year |
+
+### FinancialYearService
+
+The `FinancialYearService` provides methods to manage financial years.
+
+#### Creating Financial Years
+
+```php
 use App\Services\FinancialYearService;
 
 $financialYearService = app(FinancialYearService::class);
@@ -270,7 +361,11 @@ $customFY = $financialYearService->createFinancialYear(
     'FY2024-25',
     true // Activate immediately
 );
-Getting Financial Years
+```
+
+#### Getting Financial Years
+
+```php
 // Get active financial year
 $activeFY = $financialYearService->getActiveFinancialYear();
 
@@ -283,12 +378,17 @@ $fy = $financialYearService->getFinancialYearForDate('2024-06-15');
 // Get financial year dates
 $dates = $financialYearService->getFinancialYearDates('2024-06-15');
 // Returns: ['start_date' => '2024-04-01', 'end_date' => '2025-03-31', 'financial_year' => ...]
-Automatic Financial Year Assignment
+```
+
+### Automatic Financial Year Assignment
+
 Journal entries automatically get assigned to the appropriate financial year based on their entry date. The system finds the financial year that contains the entry date and assigns it automatically.
 
-Financial Year in Reports
+### Financial Year in Reports
+
 All reports support financial year filtering. You can generate reports for specific financial years or let the system automatically use the current financial year.
 
+```php
 use App\Helpers\ReportHelper;
 use App\Models\FinancialYear;
 
@@ -305,7 +405,11 @@ $incomeStatement = ReportHelper::getIncomeStatementForFinancialYear(1);
 
 // Income statement automatically uses financial year dates if financial year is provided
 $incomeStatement = ReportHelper::getIncomeStatement(null, null, $fy);
-Closing a Financial Year
+```
+
+### Closing a Financial Year
+
+```php
 $financialYear = FinancialYear::find(1);
 
 // Close the financial year
@@ -315,17 +419,27 @@ $financialYear->close();
 // - Set is_closed = true
 // - Set is_active = false
 // - Set closed_at = current date
-Account & Account Type Management
+```
+
+---
+
+## 💼 Account & Account Type Management
+
 The system provides RESTful API endpoints to create, read, update, and delete Account Types and Accounts. All endpoints return JSON responses and include proper validation.
 
-Account Type API Endpoints
-Method	Endpoint	Description
-GET	/api/account-types	List all account types (supports filtering and search)
-POST	/api/account-types	Create a new account type
-GET	/api/account-types/{id}	Get a specific account type
-PUT/PATCH	/api/account-types/{id}	Update an account type
-DELETE	/api/account-types/{id}	Delete an account type (only if no accounts exist)
-Create Account Type Example
+### Account Type API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/account-types` | List all account types (supports filtering and search) |
+| `POST` | `/api/account-types` | Create a new account type |
+| `GET` | `/api/account-types/{id}` | Get a specific account type |
+| `PUT/PATCH` | `/api/account-types/{id}` | Update an account type |
+| `DELETE` | `/api/account-types/{id}` | Delete an account type (only if no accounts exist) |
+
+#### Create Account Type Example
+
+```http
 POST /api/account-types
 Content-Type: application/json
 
@@ -337,25 +451,37 @@ Content-Type: application/json
     "sort_order": 6,
     "is_active": true
 }
-List Account Types with Filters
-GET /api/account-types?active_only=1&is_system=0&search=income&sort_by=sort_order&sort_order=asc
+```
 
-Query Parameters:
-- active_only: Filter only active account types
-- is_system: Filter by system status (1 for system, 0 for non-system)
-- search: Search in name, code, or description
-- sort_by: Field to sort by (default: sort_order)
-- sort_order: asc or desc (default: asc)
-Account API Endpoints
-Method	Endpoint	Description
-GET	/api/accounts	List all accounts (supports filtering and search)
-POST	/api/accounts	Create a new account
-GET	/api/accounts/{id}	Get a specific account (includes current balance)
-PUT/PATCH	/api/accounts/{id}	Update an account
-DELETE	/api/accounts/{id}	Delete an account (system accounts cannot be deleted)
-GET	/api/accounts/options/account-types	Get account types for dropdowns
-GET	/api/accounts/options/parent-accounts	Get parent accounts for dropdowns
-Create Account Example
+#### List Account Types with Filters
+
+```http
+GET /api/account-types?active_only=1&is_system=0&search=income&sort_by=sort_order&sort_order=asc
+```
+
+**Query Parameters:**
+
+- `active_only`: Filter only active account types
+- `is_system`: Filter by system status (1 for system, 0 for non-system)
+- `search`: Search in name, code, or description
+- `sort_by`: Field to sort by (default: `sort_order`)
+- `sort_order`: `asc` or `desc` (default: `asc`)
+
+### Account API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/accounts` | List all accounts (supports filtering and search) |
+| `POST` | `/api/accounts` | Create a new account |
+| `GET` | `/api/accounts/{id}` | Get a specific account (includes current balance) |
+| `PUT/PATCH` | `/api/accounts/{id}` | Update an account |
+| `DELETE` | `/api/accounts/{id}` | Delete an account (system accounts cannot be deleted) |
+| `GET` | `/api/accounts/options/account-types` | Get account types for dropdowns |
+| `GET` | `/api/accounts/options/parent-accounts` | Get parent accounts for dropdowns |
+
+#### Create Account Example
+
+```http
 POST /api/accounts
 Content-Type: application/json
 
@@ -370,57 +496,80 @@ Content-Type: application/json
     "is_active": true,
     "sort_order": 1
 }
-List Accounts with Filters
-GET /api/accounts?account_type_id=1&active_only=1&include_balance=1&search=cash
+```
 
-Query Parameters:
-- account_type_id: Filter by account type
-- parent_id: Filter by parent account (use 'null' for root accounts)
-- active_only: Filter only active accounts
-- include_balance: Include current balance in response
-- search: Search in name, code, or description
-- sort_by: Field to sort by (default: code)
-- sort_order: asc or desc (default: asc)
-Validation Rules
-Account Type Validation
-name: Required, string, max 255 characters (cannot be changed for system account types)
-code: Required, string, max 50 characters, unique, uppercase (cannot be changed for system account types)
-normal_balance: Required, must be 'DEBIT' or 'CREDIT' (cannot be changed for system account types)
-description: Optional, string, max 1000 characters
-sort_order: Optional, integer, min 0
-is_active: Optional, boolean
-is_system: Optional, boolean (automatically set for default account types)
-Account Validation
-account_type_id: Required, must exist in account_types table
-parent_id: Optional, must exist in accounts table
-code: Required, string, max 50 characters, unique
-name: Required, string, max 255 characters
-description: Optional, string, max 1000 characters
-opening_balance: Optional, numeric, min 0
-opening_balance_date: Optional, valid date
-is_active: Optional, boolean
-sort_order: Optional, integer, min 0
-metadata: Optional, array
-System Account Types
+#### List Accounts with Filters
+
+```http
+GET /api/accounts?account_type_id=1&active_only=1&include_balance=1&search=cash
+```
+
+**Query Parameters:**
+
+- `account_type_id`: Filter by account type
+- `parent_id`: Filter by parent account (use `'null'` for root accounts)
+- `active_only`: Filter only active accounts
+- `include_balance`: Include current balance in response
+- `search`: Search in name, code, or description
+- `sort_by`: Field to sort by (default: `code`)
+- `sort_order`: `asc` or `desc` (default: `asc`)
+
+### Validation Rules
+
+#### Account Type Validation
+
+- `name`: Required, string, max 255 characters (cannot be changed for system account types)
+- `code`: Required, string, max 50 characters, unique, uppercase (cannot be changed for system account types)
+- `normal_balance`: Required, must be `'DEBIT'` or `'CREDIT'` (cannot be changed for system account types)
+- `description`: Optional, string, max 1000 characters
+- `sort_order`: Optional, integer, min 0
+- `is_active`: Optional, boolean
+- `is_system`: Optional, boolean (automatically set for default account types)
+
+#### Account Validation
+
+- `account_type_id`: Required, must exist in `account_types` table
+- `parent_id`: Optional, must exist in `accounts` table
+- `code`: Required, string, max 50 characters, unique
+- `name`: Required, string, max 255 characters
+- `description`: Optional, string, max 1000 characters
+- `opening_balance`: Optional, numeric, min 0
+- `opening_balance_date`: Optional, valid date
+- `is_active`: Optional, boolean
+- `sort_order`: Optional, integer, min 0
+- `metadata`: Optional, array
+
+### System Account Types
+
 System account types (Asset, Liability, Equity, Revenue, Expense) are protected and cannot be:
 
-Deleted
-Modified in code, name, or normal_balance
-Only description and is_active can be updated for system account types
-The is_system field marks account types that are essential to the accounting system. Default account types (ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE) are automatically marked as system.
+- ❌ Deleted
+- ❌ Modified in code, name, or normal_balance
 
-Deletion Restrictions
-Account Types:
-System account types cannot be deleted
-Cannot be deleted if they have associated accounts
-Accounts:
-System accounts cannot be deleted
-Cannot be deleted if they have child accounts
-Cannot be deleted if they have journal entries (use soft delete instead)
-Financial Reports
-The ReportHelper class provides methods to generate various financial reports.
+> Only `description` and `is_active` can be updated for system account types.
 
-Trial Balance
+The `is_system` field marks account types that are essential to the accounting system. Default account types (`ASSET`, `LIABILITY`, `EQUITY`, `REVENUE`, `EXPENSE`) are automatically marked as system.
+
+### Deletion Restrictions
+
+**Account Types:**
+- System account types cannot be deleted
+- Cannot be deleted if they have associated accounts
+
+**Accounts:**
+- System accounts cannot be deleted
+- Cannot be deleted if they have child accounts
+- Cannot be deleted if they have journal entries (use soft delete instead)
+
+---
+
+## 📈 Financial Reports
+
+The `ReportHelper` class provides methods to generate various financial reports.
+
+### Trial Balance
+
+```php
 use App\Helpers\ReportHelper;
 
 $trialBalance = ReportHelper::getTrialBalance(now()->toDateString());
@@ -433,7 +582,11 @@ $trialBalance = ReportHelper::getTrialBalance(now()->toDateString());
 //     'total_credits' => 10000.00,
 //     'is_balanced' => true,
 // ]
-Balance Sheet
+```
+
+### Balance Sheet
+
+```php
 $balanceSheet = ReportHelper::getBalanceSheet(now()->toDateString());
 
 // Returns:
@@ -445,7 +598,11 @@ $balanceSheet = ReportHelper::getBalanceSheet(now()->toDateString());
 //     'total_liabilities_and_equity' => 50000.00,
 //     'is_balanced' => true,
 // ]
-Income Statement (Profit & Loss)
+```
+
+### Income Statement (Profit & Loss)
+
+```php
 $startDate = now()->startOfYear()->toDateString();
 $endDate = now()->toDateString();
 
@@ -459,7 +616,11 @@ $incomeStatement = ReportHelper::getIncomeStatement($startDate, $endDate);
 //     'expenses' => ['accounts' => [...], 'total' => 30000.00],
 //     'net_income' => 20000.00,
 // ]
-General Ledger
+```
+
+### General Ledger
+
+```php
 $cashAccount = Account::where('code', '1100')->first();
 
 $generalLedger = ReportHelper::getGeneralLedger(
@@ -477,12 +638,20 @@ $generalLedger = ReportHelper::getGeneralLedger(
 //     'closing_balance' => 15000.00,
 //     'transactions' => [...],
 // ]
-Chart of Accounts
+```
+
+### Chart of Accounts
+
+```php
 $chartOfAccounts = ReportHelper::getChartOfAccounts();
 
 // Returns array of accounts with:
 // - id, code, name, account_type, parent_code, is_active, current_balance
-Journal Entries Report
+```
+
+### Journal Entries Report
+
+```php
 $journalEntries = ReportHelper::getJournalEntriesReport(
     now()->startOfMonth()->toDateString(),
     now()->toDateString(),
@@ -496,9 +665,13 @@ $journalEntries = ReportHelper::getJournalEntriesReport(
 //     'status' => 'posted',
 //     'entries' => [...],
 // ]
-Cash Book
+```
+
+### Cash Book
+
 The Cash Book shows all cash receipts and payments for a date range. It tracks all transactions involving the cash account, showing receipts (debits to cash) and payments (credits to cash).
 
+```php
 $cashBook = ReportHelper::getCashBook(
     now()->startOfMonth()->toDateString(),
     now()->toDateString(),
@@ -541,9 +714,13 @@ $cashBook = ReportHelper::getCashBook(
 //     'total_payments' => 2000.00,
 //     'closing_balance' => 13000.00,
 // ]
-Day Book
+```
+
+### Day Book
+
 The Day Book shows all transactions for a specific day. It provides a complete record of all journal entries posted on a given date, including all debit and credit lines.
 
+```php
 $dayBook = ReportHelper::getDayBook('2024-01-15');
 
 // Returns:
@@ -586,8 +763,15 @@ $dayBook = ReportHelper::getDayBook('2024-01-15');
 //     'is_balanced' => true,
 //     'total_entries' => 5,
 // ]
-Complete Usage Examples
-Example 1: Using Accountable Trait
+```
+
+---
+
+## 💡 Complete Usage Examples
+
+### Example 1: Using Accountable Trait
+
+```php
 // In your Sale model
 use App\Traits\Accountable;
 
@@ -612,7 +796,11 @@ $sale = Sale::create([
 ]);
 
 // Journal entry is automatically created and posted!
-Example 2: Manual Journal Entry Creation
+```
+
+### Example 2: Manual Journal Entry Creation
+
+```php
 use App\Services\AccountingService;
 use App\Models\Account;
 
@@ -633,7 +821,11 @@ $entry = $accountingService->createTransaction(
     ],
     true // Auto post
 );
-Example 3: Getting Account Balance
+```
+
+### Example 3: Getting Account Balance
+
+```php
 use App\Models\Account;
 
 $cashAccount = Account::where('code', '1100')->first();
@@ -647,7 +839,11 @@ $balance = $cashAccount->getCurrentBalance('2024-01-31');
 // Or using the service
 $accountingService = app(AccountingService::class);
 $balance = $accountingService->getAccountBalance($cashAccount->id);
-Example 4: Reversing a Journal Entry
+```
+
+### Example 4: Reversing a Journal Entry
+
+```php
 use App\Models\JournalEntry;
 
 $entry = JournalEntry::find(1);
@@ -658,7 +854,11 @@ $reversal = $entry->reverse('Reversed due to error');
 // Or using the service
 $accountingService = app(AccountingService::class);
 $reversal = $accountingService->reverseEntry($entry, 'Reversed due to error');
-Example 5: Generating Financial Reports
+```
+
+### Example 5: Generating Financial Reports
+
+```php
 use App\Helpers\ReportHelper;
 
 // Trial Balance
@@ -690,7 +890,11 @@ $cashBook = ReportHelper::getCashBook(
 
 // Day Book
 $dayBook = ReportHelper::getDayBook(now()->toDateString());
-Example 6: Working with Financial Years
+```
+
+### Example 6: Working with Financial Years
+
+```php
 use App\Services\FinancialYearService;
 use App\Helpers\ReportHelper;
 use App\Models\FinancialYear;
@@ -713,11 +917,20 @@ $currentFY->close();
 
 // Activate next financial year
 $nextFY = $financialYearService->createCustomFinancialYear(2025, 4, true);
-Best Practices
-Always use account codes instead of IDs when possible for better maintainability
-Set up your chart of accounts using seeders before using the system
-Use the Accountable trait for automatic journal entry creation when appropriate
-Post journal entries only after validation to maintain data integrity
-Use closures in accounting config for dynamic account selection
-Regularly update account balances for better performance on large datasets
-Always validate that journal entries are balanced before posting
+```
+
+---
+
+## ✅ Best Practices
+
+- ✅ Always use account codes instead of IDs when possible for better maintainability
+- ✅ Set up your chart of accounts using seeders before using the system
+- ✅ Use the Accountable trait for automatic journal entry creation when appropriate
+- ✅ Post journal entries only after validation to maintain data integrity
+- ✅ Use closures in accounting config for dynamic account selection
+- ✅ Regularly update account balances for better performance on large datasets
+- ✅ Always validate that journal entries are balanced before posting
+
+---
+
+*Documentation last updated: 2024*
