@@ -17,6 +17,7 @@ class JournalEntry extends Model
     protected $fillable = [
         'entry_number',
         'entry_date',
+        'financial_year_id',
         'reference_type',
         'reference_id',
         'description',
@@ -45,6 +46,17 @@ class JournalEntry extends Model
         static::creating(function ($journalEntry) {
             if (empty($journalEntry->entry_number)) {
                 $journalEntry->entry_number = static::generateEntryNumber();
+            }
+
+            // Auto-assign financial year if enabled and not set
+            if (config('accounting.enable_financial_year') && 
+                config('accounting.auto_assign_financial_year') && 
+                empty($journalEntry->financial_year_id)) {
+                $financialYearService = app(\App\Services\FinancialYearService::class);
+                $financialYear = $financialYearService->getFinancialYearForDate($journalEntry->entry_date);
+                if ($financialYear) {
+                    $journalEntry->financial_year_id = $financialYear->id;
+                }
             }
         });
     }
@@ -99,6 +111,14 @@ class JournalEntry extends Model
     public function reference(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    /**
+     * Get the financial year
+     */
+    public function financialYear(): BelongsTo
+    {
+        return $this->belongsTo(FinancialYear::class);
     }
 
     /**
@@ -165,8 +185,20 @@ class JournalEntry extends Model
             throw new \Exception('Only posted entries can be reversed.');
         }
 
+        // Get financial year for reversal date (if enabled)
+        $reversalDate = now()->toDateString();
+        $financialYear = null;
+        
+        if (config('accounting.enable_financial_year') && 
+            config('accounting.auto_assign_financial_year')) {
+            $financialYearService = app(\App\Services\FinancialYearService::class);
+            $fy = $financialYearService->getFinancialYearForDate($reversalDate);
+            $financialYear = $fy ? $fy->id : null;
+        }
+        
         $reversal = static::create([
-            'entry_date' => now()->toDateString(),
+            'entry_date' => $reversalDate,
+            'financial_year_id' => $financialYear ? $financialYear->id : null,
             'description' => $description ?? 'Reversal of ' . $this->entry_number,
             'notes' => 'Reversal of entry: ' . $this->entry_number,
             'status' => 'draft',
@@ -205,5 +237,13 @@ class JournalEntry extends Model
     public function scopeDateRange($query, $startDate, $endDate)
     {
         return $query->whereBetween('entry_date', [$startDate, $endDate]);
+    }
+
+    /**
+     * Scope to get entries by financial year
+     */
+    public function scopeForFinancialYear($query, $financialYearId)
+    {
+        return $query->where('financial_year_id', $financialYearId);
     }
 }

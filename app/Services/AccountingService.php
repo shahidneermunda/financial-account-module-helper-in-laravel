@@ -25,9 +25,22 @@ class AccountingService
             // Validate lines
             $this->validateJournalEntryLines($lines);
 
+            // Get financial year for the entry date (if enabled)
+            $entryDate = $data['entry_date'] ?? now()->toDateString();
+            $financialYear = $data['financial_year_id'] ?? null;
+            
+            if (config('accounting.enable_financial_year') && 
+                config('accounting.auto_assign_financial_year') && 
+                !$financialYear) {
+                $financialYearService = app(\App\Services\FinancialYearService::class);
+                $fy = $financialYearService->getFinancialYearForDate($entryDate);
+                $financialYear = $fy ? $fy->id : null;
+            }
+
             // Create journal entry
             $entry = JournalEntry::create([
-                'entry_date' => $data['entry_date'] ?? now()->toDateString(),
+                'entry_date' => $entryDate,
+                'financial_year_id' => $financialYear,
                 'description' => $data['description'] ?? '',
                 'notes' => $data['notes'] ?? null,
                 'reference_type' => $data['reference_type'] ?? null,

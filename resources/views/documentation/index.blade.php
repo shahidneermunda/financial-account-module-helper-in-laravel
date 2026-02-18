@@ -165,6 +165,7 @@
                 <li><a href="#models">Models</a></li>
                 <li><a href="#accountable-trait">Accountable Trait</a></li>
                 <li><a href="#accounting-service">AccountingService</a></li>
+                <li><a href="#financial-years">Financial Year Management</a></li>
                 <li><a href="#reports">Financial Reports</a></li>
                 <li><a href="#examples">Usage Examples</a></li>
             </ul>
@@ -471,6 +472,162 @@ $entry = $accountingService->createTransaction(
             </table>
         </div>
 
+        <div class="section" id="financial-years">
+            <h2>Financial Year Management</h2>
+            <p>
+                The system supports financial year management, allowing you to organize transactions and reports
+                by financial year periods. Financial years can be calendar-based (Jan-Dec) or custom periods
+                (e.g., April-March).
+            </p>
+
+            <h3>Enabling/Disabling Financial Year Management</h3>
+            <p>
+                Financial year management can be enabled or disabled via configuration. When disabled, the system
+                works without financial year filtering, and all journal entries and reports operate normally.
+            </p>
+
+            <h4>Configuration File</h4>
+            <p>Edit <code>config/accounting.php</code> to configure financial year settings:</p>
+            <pre><code>return [
+    // Enable or disable financial year wise listing
+    'enable_financial_year' => env('ACCOUNTING_ENABLE_FINANCIAL_YEAR', true),
+    
+    // Default financial year start month (1=Jan, 4=Apr, 7=Jul, 10=Oct)
+    'default_financial_year_start_month' => env('ACCOUNTING_FY_START_MONTH', 4),
+    
+    // Auto-assign financial year to journal entries
+    'auto_assign_financial_year' => env('ACCOUNTING_AUTO_ASSIGN_FY', true),
+];</code></pre>
+
+            <h4>Environment Variables</h4>
+            <p>You can also set these in your <code>.env</code> file:</p>
+            <pre><code># Enable/disable financial year management
+ACCOUNTING_ENABLE_FINANCIAL_YEAR=true
+
+# Default financial year start month
+ACCOUNTING_FY_START_MONTH=4
+
+# Auto-assign financial year
+ACCOUNTING_AUTO_ASSIGN_FY=true</code></pre>
+
+            <h4>Checking if Financial Year is Enabled</h4>
+            <pre><code>use App\Helpers\AccountingHelper;
+
+// Check if financial year is enabled
+if (AccountingHelper::isFinancialYearEnabled()) {
+    // Use financial year features
+    $fy = $financialYearService->getCurrentFinancialYear();
+}
+
+// Or use config directly
+if (config('accounting.enable_financial_year')) {
+    // Financial year features available
+}</code></pre>
+
+            <h4>Behavior When Disabled</h4>
+            <p>
+                When financial year management is disabled:
+            </p>
+            <ul>
+                <li>Journal entries are created without financial year assignment</li>
+                <li>Reports work normally using date ranges instead of financial years</li>
+                <li>Financial year-specific methods will throw exceptions if called</li>
+                <li>The system behaves as if financial year management never existed</li>
+            </ul>
+            <p>
+                <strong>Note:</strong> The <code>financial_year_id</code> column in the database will still exist
+                (it's nullable), but it won't be used when the feature is disabled.
+            </p>
+
+            <h3>FinancialYear Model</h3>
+            <p>The FinancialYear model represents a financial year period with start and end dates.</p>
+            <h4>Key Methods:</h4>
+            <ul>
+                <li><code>containsDate(string $date): bool</code> - Check if a date falls within this financial year</li>
+                <li><code>close(): bool</code> - Close the financial year</li>
+                <li><code>activate(): bool</code> - Activate this financial year (deactivates others)</li>
+                <li><code>static::forDate(string $date): ?FinancialYear</code> - Get financial year for a date</li>
+                <li><code>static::active(): ?FinancialYear</code> - Get the active financial year</li>
+            </ul>
+
+            <h3>FinancialYearService</h3>
+            <p>The FinancialYearService provides methods to manage financial years.</p>
+
+            <h4>Creating Financial Years</h4>
+            <pre><code>use App\Services\FinancialYearService;
+
+$financialYearService = app(FinancialYearService::class);
+
+// Create a calendar year financial year (Jan 1 - Dec 31)
+$fy2024 = $financialYearService->createCalendarYearFinancialYear(2024, true);
+
+// Create a custom financial year (e.g., April 1 - March 31)
+$fy2024_25 = $financialYearService->createCustomFinancialYear(2024, 4, true);
+
+// Create with custom dates
+$customFY = $financialYearService->createFinancialYear(
+    '2024-04-01',
+    '2025-03-31',
+    'FY 2024-25',
+    'FY2024-25',
+    true // Activate immediately
+);</code></pre>
+
+            <h4>Getting Financial Years</h4>
+            <pre><code>// Get active financial year
+$activeFY = $financialYearService->getActiveFinancialYear();
+
+// Get current financial year (active or for today's date)
+$currentFY = $financialYearService->getCurrentFinancialYear();
+
+// Get financial year for a specific date
+$fy = $financialYearService->getFinancialYearForDate('2024-06-15');
+
+// Get financial year dates
+$dates = $financialYearService->getFinancialYearDates('2024-06-15');
+// Returns: ['start_date' => '2024-04-01', 'end_date' => '2025-03-31', 'financial_year' => ...]</code></pre>
+
+            <h3>Automatic Financial Year Assignment</h3>
+            <p>
+                Journal entries automatically get assigned to the appropriate financial year based on their
+                entry date. The system finds the financial year that contains the entry date and assigns it
+                automatically.
+            </p>
+
+            <h3>Financial Year in Reports</h3>
+            <p>
+                All reports support financial year filtering. You can generate reports for specific financial years
+                or let the system automatically use the current financial year.
+            </p>
+            <pre><code>use App\Helpers\ReportHelper;
+use App\Models\FinancialYear;
+
+// Get financial year
+$fy = FinancialYear::find(1);
+
+// Generate reports for a specific financial year
+$trialBalance = ReportHelper::getTrialBalanceForFinancialYear($fy);
+$balanceSheet = ReportHelper::getBalanceSheetForFinancialYear($fy);
+$incomeStatement = ReportHelper::getIncomeStatementForFinancialYear($fy);
+
+// Or pass financial year ID
+$incomeStatement = ReportHelper::getIncomeStatementForFinancialYear(1);
+
+// Income statement automatically uses financial year dates if financial year is provided
+$incomeStatement = ReportHelper::getIncomeStatement(null, null, $fy);</code></pre>
+
+            <h3>Closing a Financial Year</h3>
+            <pre><code>$financialYear = FinancialYear::find(1);
+
+// Close the financial year
+$financialYear->close();
+
+// This will:
+// - Set is_closed = true
+// - Set is_active = false
+// - Set closed_at = current date</code></pre>
+        </div>
+
         <div class="section" id="reports">
             <h2>Financial Reports</h2>
             <p>
@@ -766,6 +923,30 @@ $cashBook = ReportHelper::getCashBook(
 
 // Day Book
 $dayBook = ReportHelper::getDayBook(now()->toDateString());</code></pre>
+
+            <h3>Example 6: Working with Financial Years</h3>
+            <pre><code>use App\Services\FinancialYearService;
+use App\Helpers\ReportHelper;
+use App\Models\FinancialYear;
+
+$financialYearService = app(FinancialYearService::class);
+
+// Create a financial year (April 1, 2024 to March 31, 2025)
+$fy = $financialYearService->createCustomFinancialYear(2024, 4, true);
+
+// Get current financial year
+$currentFY = $financialYearService->getCurrentFinancialYear();
+
+// Generate reports for a specific financial year
+$trialBalance = ReportHelper::getTrialBalanceForFinancialYear($currentFY);
+$balanceSheet = ReportHelper::getBalanceSheetForFinancialYear($currentFY);
+$incomeStatement = ReportHelper::getIncomeStatementForFinancialYear($currentFY);
+
+// Close financial year at year end
+$currentFY->close();
+
+// Activate next financial year
+$nextFY = $financialYearService->createCustomFinancialYear(2025, 4, true);</code></pre>
         </div>
 
         <div class="section">

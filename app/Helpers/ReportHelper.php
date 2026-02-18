@@ -4,6 +4,7 @@ namespace App\Helpers;
 
 use App\Models\Account;
 use App\Models\AccountType;
+use App\Models\FinancialYear;
 use App\Models\JournalEntry;
 use App\Models\JournalEntryLine;
 use Carbon\Carbon;
@@ -113,12 +114,34 @@ class ReportHelper
      *
      * @param string|null $startDate
      * @param string|null $endDate
+     * @param int|FinancialYear|null $financialYear Financial year ID, FinancialYear instance, or null to auto-detect
      * @return array
      */
-    public static function getIncomeStatement(?string $startDate = null, ?string $endDate = null): array
+    public static function getIncomeStatement(?string $startDate = null, ?string $endDate = null, $financialYear = null): array
     {
-        $startDate = $startDate ?? Carbon::now()->startOfYear()->toDateString();
-        $endDate = $endDate ?? now()->toDateString();
+        // If financial year is provided, use its dates
+        if ($financialYear && config('accounting.enable_financial_year')) {
+            $fy = self::resolveFinancialYear($financialYear);
+            if ($fy) {
+                $startDate = $startDate ?? $fy->start_date->toDateString();
+                $endDate = $endDate ?? $fy->end_date->toDateString();
+            }
+        } elseif (config('accounting.enable_financial_year')) {
+            // Try to get financial year for current date
+            $financialYearService = app(\App\Services\FinancialYearService::class);
+            $currentFY = $financialYearService->getCurrentFinancialYear();
+            if ($currentFY && !$startDate && !$endDate) {
+                $startDate = $currentFY->start_date->toDateString();
+                $endDate = $currentFY->end_date->toDateString();
+            } else {
+                $startDate = $startDate ?? Carbon::now()->startOfYear()->toDateString();
+                $endDate = $endDate ?? now()->toDateString();
+            }
+        } else {
+            // Financial year disabled, use default date logic
+            $startDate = $startDate ?? Carbon::now()->startOfYear()->toDateString();
+            $endDate = $endDate ?? now()->toDateString();
+        }
 
         $revenues = self::getAccountsByType('REVENUE', $endDate, $startDate);
         $expenses = self::getAccountsByType('EXPENSE', $endDate, $startDate);
@@ -127,9 +150,20 @@ class ReportHelper
         $totalExpenses = array_sum(array_column($expenses, 'balance'));
         $netIncome = $totalRevenue - $totalExpenses;
 
+        $fy = null;
+        if (config('accounting.enable_financial_year')) {
+            $fy = self::resolveFinancialYear($financialYear) ?? 
+                  app(\App\Services\FinancialYearService::class)->getFinancialYearForDate($startDate);
+        }
+
         return [
             'start_date' => $startDate,
             'end_date' => $endDate,
+            'financial_year' => $fy ? [
+                'id' => $fy->id,
+                'name' => $fy->name,
+                'code' => $fy->code,
+            ] : null,
             'revenues' => [
                 'accounts' => $revenues,
                 'total' => $totalRevenue,
@@ -140,6 +174,25 @@ class ReportHelper
             ],
             'net_income' => $netIncome,
         ];
+    }
+
+    /**
+     * Resolve financial year from ID, instance, or null
+     *
+     * @param int|FinancialYear|null $financialYear
+     * @return FinancialYear|null
+     */
+    protected static function resolveFinancialYear($financialYear): ?FinancialYear
+    {
+        if ($financialYear instanceof FinancialYear) {
+            return $financialYear;
+        }
+
+        if (is_int($financialYear)) {
+            return FinancialYear::find($financialYear);
+        }
+
+        return null;
     }
 
     /**
@@ -570,5 +623,88 @@ class ReportHelper
             'is_balanced' => abs($totalDebits - $totalCredits) < 0.01,
             'total_entries' => count($transactions),
         ];
+    }
+
+    /**
+     * Get Trial Balance for a specific financial year
+     *
+     * @param int|FinancialYear|null $financialYear
+     * @param string|null $date Optional date within the financial year
+     * @return array
+     */
+    public static function getTrialBalanceForFinancialYear($financialYear, ?string $date = null): array
+    {
+        if (!config('accounting.enable_financial_year')) {
+            throw new \Exception('Financial year management is disabled. Enable it in config/accounting.php');
+        }
+
+        $fy = self::resolveFinancialYear($financialYear);
+        
+        if (!$fy) {
+            throw new \Exception('Financial year not found.');
+        }
+
+        $date = $date ?? $fy->end_date->toDateString();
+        
+        // Ensure date is within financial year
+        if (!$fy->containsDate($date)) {
+            $date = $fy->end_date->toDateString();
+        }
+
+        return self::getTrialBalance($date);
+    }
+
+    /**
+     * Get Balance Sheet for a specific financial year
+     *
+     * @param int|FinancialYear|null $financialYear
+     * @param string|null $date Optional date within the financial year
+     * @return array
+     */
+    public static function getBalanceSheetForFinancialYear($financialYear, ?string $date = null): array
+    {
+        if (!config('accounting.enable_financial_year')) {
+            throw new \Exception('Financial year management is disabled. Enable it in config/accounting.php');
+        }
+
+        $fy = self::resolveFinancialYear($financialYear);
+        
+        if (!$fy) {
+            throw new \Exception('Financial year not found.');
+        }
+
+        $date = $date ?? $fy->end_date->toDateString();
+        
+        // Ensure date is within financial year
+        if (!$fy->containsDate($date)) {
+            $date = $fy->end_date->toDateString();
+        }
+
+        return self::getBalanceSheet($date);
+    }
+
+    /**
+     * Get Income Statement for a specific financial year
+     *
+     * @param int|FinancialYear|null $financialYear
+     * @return array
+     */
+    public static function getIncomeStatementForFinancialYear($financialYear): array
+    {
+        if (!config('accounting.enable_financial_year')) {
+            throw new \Exception('Financial year management is disabled. Enable it in config/accounting.php');
+        }
+
+        $fy = self::resolveFinancialYear($financialYear);
+        
+        if (!$fy) {
+            throw new \Exception('Financial year not found.');
+        }
+
+        return self::getIncomeStatement(
+            $fy->start_date->toDateString(),
+            $fy->end_date->toDateString(),
+            $fy
+        );
     }
 }
