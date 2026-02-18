@@ -17,12 +17,14 @@ class AccountType extends Model
         'description',
         'sort_order',
         'is_active',
+        'is_system',
     ];
 
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
+            'is_system' => 'boolean',
             'sort_order' => 'integer',
         ];
     }
@@ -57,5 +59,21 @@ class AccountType extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    /**
+     * Scope to get system account types
+     */
+    public function scopeSystem($query)
+    {
+        return $query->where('is_system', true);
+    }
+
+    /**
+     * Scope to get non-system account types
+     */
+    public function scopeNonSystem($query)
+    {
+        return $query->where('is_system', false);
     }
 }

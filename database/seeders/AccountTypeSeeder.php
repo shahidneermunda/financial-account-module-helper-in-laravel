@@ -20,6 +20,7 @@ class AccountTypeSeeder extends Seeder
                 'description' => 'Resources owned by the business',
                 'sort_order' => 1,
                 'is_active' => true,
+                'is_system' => true,
             ],
             [
                 'name' => 'Liability',
@@ -28,6 +29,7 @@ class AccountTypeSeeder extends Seeder
                 'description' => 'Obligations owed by the business',
                 'sort_order' => 2,
                 'is_active' => true,
+                'is_system' => true,
             ],
             [
                 'name' => 'Equity',
@@ -36,6 +38,7 @@ class AccountTypeSeeder extends Seeder
                 'description' => 'Owner\'s equity in the business',
                 'sort_order' => 3,
                 'is_active' => true,
+                'is_system' => true,
             ],
             [
                 'name' => 'Revenue',
@@ -44,6 +47,7 @@ class AccountTypeSeeder extends Seeder
                 'description' => 'Income generated from business operations',
                 'sort_order' => 4,
                 'is_active' => true,
+                'is_system' => true,
             ],
             [
                 'name' => 'Expense',
@@ -52,6 +56,7 @@ class AccountTypeSeeder extends Seeder
                 'description' => 'Costs incurred in business operations',
                 'sort_order' => 5,
                 'is_active' => true,
+                'is_system' => true,
             ],
         ];
 

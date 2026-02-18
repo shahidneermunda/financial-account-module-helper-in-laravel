@@ -166,6 +166,7 @@
                 <li><a href="#accountable-trait">Accountable Trait</a></li>
                 <li><a href="#accounting-service">AccountingService</a></li>
                 <li><a href="#financial-years">Financial Year Management</a></li>
+                <li><a href="#account-management">Account & Account Type Management</a></li>
                 <li><a href="#reports">Financial Reports</a></li>
                 <li><a href="#examples">Usage Examples</a></li>
             </ul>
@@ -626,6 +627,208 @@ $financialYear->close();
 // - Set is_closed = true
 // - Set is_active = false
 // - Set closed_at = current date</code></pre>
+        </div>
+
+        <div class="section" id="account-management">
+            <h2>Account & Account Type Management</h2>
+            <p>
+                The system provides RESTful API endpoints to create, read, update, and delete Account Types and Accounts.
+                All endpoints return JSON responses and include proper validation.
+            </p>
+
+            <h3>Account Type API Endpoints</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Endpoint</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>GET</code></td>
+                        <td><code>/api/account-types</code></td>
+                        <td>List all account types (supports filtering and search)</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST</code></td>
+                        <td><code>/api/account-types</code></td>
+                        <td>Create a new account type</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET</code></td>
+                        <td><code>/api/account-types/{id}</code></td>
+                        <td>Get a specific account type</td>
+                    </tr>
+                    <tr>
+                        <td><code>PUT/PATCH</code></td>
+                        <td><code>/api/account-types/{id}</code></td>
+                        <td>Update an account type</td>
+                    </tr>
+                    <tr>
+                        <td><code>DELETE</code></td>
+                        <td><code>/api/account-types/{id}</code></td>
+                        <td>Delete an account type (only if no accounts exist)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Create Account Type Example</h4>
+            <pre><code>POST /api/account-types
+Content-Type: application/json
+
+{
+    "name": "Other Income",
+    "code": "OTHER_INCOME",
+    "normal_balance": "CREDIT",
+    "description": "Miscellaneous income sources",
+    "sort_order": 6,
+    "is_active": true
+}</code></pre>
+
+            <h4>List Account Types with Filters</h4>
+            <pre><code>GET /api/account-types?active_only=1&is_system=0&search=income&sort_by=sort_order&sort_order=asc
+
+Query Parameters:
+- active_only: Filter only active account types
+- is_system: Filter by system status (1 for system, 0 for non-system)
+- search: Search in name, code, or description
+- sort_by: Field to sort by (default: sort_order)
+- sort_order: asc or desc (default: asc)</code></pre>
+
+            <h3>Account API Endpoints</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Endpoint</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>GET</code></td>
+                        <td><code>/api/accounts</code></td>
+                        <td>List all accounts (supports filtering and search)</td>
+                    </tr>
+                    <tr>
+                        <td><code>POST</code></td>
+                        <td><code>/api/accounts</code></td>
+                        <td>Create a new account</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET</code></td>
+                        <td><code>/api/accounts/{id}</code></td>
+                        <td>Get a specific account (includes current balance)</td>
+                    </tr>
+                    <tr>
+                        <td><code>PUT/PATCH</code></td>
+                        <td><code>/api/accounts/{id}</code></td>
+                        <td>Update an account</td>
+                    </tr>
+                    <tr>
+                        <td><code>DELETE</code></td>
+                        <td><code>/api/accounts/{id}</code></td>
+                        <td>Delete an account (system accounts cannot be deleted)</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET</code></td>
+                        <td><code>/api/accounts/options/account-types</code></td>
+                        <td>Get account types for dropdowns</td>
+                    </tr>
+                    <tr>
+                        <td><code>GET</code></td>
+                        <td><code>/api/accounts/options/parent-accounts</code></td>
+                        <td>Get parent accounts for dropdowns</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Create Account Example</h4>
+            <pre><code>POST /api/accounts
+Content-Type: application/json
+
+{
+    "account_type_id": 1,
+    "parent_id": null,
+    "code": "1100",
+    "name": "Cash",
+    "description": "Cash on hand and in bank",
+    "opening_balance": 10000.00,
+    "opening_balance_date": "2024-01-01",
+    "is_active": true,
+    "sort_order": 1
+}</code></pre>
+
+            <h4>List Accounts with Filters</h4>
+            <pre><code>GET /api/accounts?account_type_id=1&active_only=1&include_balance=1&search=cash
+
+Query Parameters:
+- account_type_id: Filter by account type
+- parent_id: Filter by parent account (use 'null' for root accounts)
+- active_only: Filter only active accounts
+- include_balance: Include current balance in response
+- search: Search in name, code, or description
+- sort_by: Field to sort by (default: code)
+- sort_order: asc or desc (default: asc)</code></pre>
+
+            <h3>Validation Rules</h3>
+            <h4>Account Type Validation</h4>
+            <ul>
+                <li><code>name</code>: Required, string, max 255 characters (cannot be changed for system account types)</li>
+                <li><code>code</code>: Required, string, max 50 characters, unique, uppercase (cannot be changed for system account types)</li>
+                <li><code>normal_balance</code>: Required, must be 'DEBIT' or 'CREDIT' (cannot be changed for system account types)</li>
+                <li><code>description</code>: Optional, string, max 1000 characters</li>
+                <li><code>sort_order</code>: Optional, integer, min 0</li>
+                <li><code>is_active</code>: Optional, boolean</li>
+                <li><code>is_system</code>: Optional, boolean (automatically set for default account types)</li>
+            </ul>
+
+            <h4>Account Validation</h4>
+            <ul>
+                <li><code>account_type_id</code>: Required, must exist in account_types table</li>
+                <li><code>parent_id</code>: Optional, must exist in accounts table</li>
+                <li><code>code</code>: Required, string, max 50 characters, unique</li>
+                <li><code>name</code>: Required, string, max 255 characters</li>
+                <li><code>description</code>: Optional, string, max 1000 characters</li>
+                <li><code>opening_balance</code>: Optional, numeric, min 0</li>
+                <li><code>opening_balance_date</code>: Optional, valid date</li>
+                <li><code>is_active</code>: Optional, boolean</li>
+                <li><code>sort_order</code>: Optional, integer, min 0</li>
+                <li><code>metadata</code>: Optional, array</li>
+            </ul>
+
+            <h3>System Account Types</h3>
+            <p>
+                System account types (Asset, Liability, Equity, Revenue, Expense) are protected and cannot be:
+            </p>
+            <ul>
+                <li>Deleted</li>
+                <li>Modified in code, name, or normal_balance</li>
+                <li>Only description and is_active can be updated for system account types</li>
+            </ul>
+            <p>
+                The <code>is_system</code> field marks account types that are essential to the accounting system.
+                Default account types (ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE) are automatically marked as system.
+            </p>
+
+            <h3>Deletion Restrictions</h3>
+            <ul>
+                <li><strong>Account Types:</strong> 
+                    <ul>
+                        <li>System account types cannot be deleted</li>
+                        <li>Cannot be deleted if they have associated accounts</li>
+                    </ul>
+                </li>
+                <li><strong>Accounts:</strong> 
+                    <ul>
+                        <li>System accounts cannot be deleted</li>
+                        <li>Cannot be deleted if they have child accounts</li>
+                        <li>Cannot be deleted if they have journal entries (use soft delete instead)</li>
+                    </ul>
+                </li>
+            </ul>
         </div>
 
         <div class="section" id="reports">
